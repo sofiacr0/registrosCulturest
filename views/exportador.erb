@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cargar archivo con JavaScript</title>
+    <script src="/static/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("btnCargar").addEventListener("click", function() {
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = function (event) {
+                    var file = event.target.files[0];
+                    var reader = new FileReader();
+                    reader.onload = function (event) {
+                        var contenido = event.target.result;
+                        document.getElementById("resultado").innerText = contenido;
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            });
+
+            function generarArchivo(formato) {
+                var file = document.createElement('a');
+                var contenido = document.getElementById('resultado').innerText.trim().split('\n');
+                var salida = "";
+
+                switch (formato) {
+                    case "CSV":
+                        for (var i = 0; i < contenido.length; i++) {
+                            salida += contenido[i] + ',a' + contenido[i] + "@unison.mx\n";
+                        }
+                        file.setAttribute('download', 'participantes.csv');
+                        file.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(salida));
+                        break;
+                    case "JSON":
+                        var jsonSalida = [];
+                        for (var i = 0; i < contenido.length; i++) {
+                            jsonSalida.push({
+                                expediente: contenido[i],
+                                correo: "a" + contenido[i] + "@unison.mx"
+                            });
+                        }
+                        file.setAttribute('download', 'participantes.json');
+                        file.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonSalida, null, 2)));
+                        break;
+                    case "SQL":
+                        salida = "CREATE DATABASE IF NOT EXISTS evento;\nUSE evento;\nCREATE TABLE IF NOT EXISTS asistentes(expediente INT NOT NULL, correo VARCHAR(255) NOT NULL);\nINSERT INTO asistentes (expediente, correo) VALUES\n";
+                        for (var i = 0; i < contenido.length; i++) {
+                            salida += "('" + contenido[i] + "','a" + contenido[i] + "@unison.mx'),\n";
+                        }
+                        salida = salida.slice(0, -2) + ";";
+                        file.setAttribute('download', 'participantes.sql');
+                        file.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(salida));
+                        break;
+                    case "XML":
+                        salida = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<asistentes>\n";
+                        for (var i = 0; i < contenido.length; i++) {
+                            salida += "  <asistente>\n    <expediente>" + contenido[i] + "</expediente>\n    <correo>a" + contenido[i] + "@unison.mx</correo>\n  </asistente>\n";
+                        }
+                        salida += "</asistentes>";
+                        file.setAttribute('download', 'participantes.xml');
+                        file.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(salida));
+                        break;
+                    default:
+                        console.error("Formato no válido");
+                        return;
+                }
+
+                file.style.display = 'none';
+                document.body.appendChild(file);
+                file.click();
+                document.body.removeChild(file);
+            }
+
+            document.getElementById("csvBtn").addEventListener("click", function() {
+                generarArchivo("CSV");
+            });
+
+            document.getElementById("jsonBtn").addEventListener("click", function() {
+                generarArchivo("JSON");
+            });
+
+            document.getElementById("sqlBtn").addEventListener("click", function() {
+                generarArchivo("SQL");
+            });
+
+            document.getElementById("xmlBtn").addEventListener("click", function() {
+                generarArchivo("XML");
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Cargar archivo con JavaScript</h1>
+    <!-- Botón para cargar el archivo -->
+    <button id="btnCargar">Seleccionar y Cargar Archivo</button>
+    <br><br>
+    <p>Contenido del archivo:</p>
+    <!-- Este elemento mostrará el contenido del archivo -->
+    <pre id="resultado"></pre>
+
+    <button id="csvBtn">CSV</button>
+    <button id="jsonBtn">JSON</button>
+    <button id="sqlBtn">SQL</button>
+    <button id="xmlBtn">XML</button>
+</body>
+
+</html>
